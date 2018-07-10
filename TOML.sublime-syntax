@@ -5,6 +5,7 @@ name: TOML
 file_extensions:
   - toml
   - tml
+  - Gopkg.lock
 scope: source.toml
 contexts:
   main:

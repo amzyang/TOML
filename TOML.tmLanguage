@@ -6,6 +6,7 @@
 	<array>
 		<string>toml</string>
 		<string>tml</string>
+		<string>Gopkg.lock</string>
 	</array>
 	<key>name</key>
 	<string>TOML</string>
