@@ -1,0 +1,146 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: TOML
+file_extensions:
+  - toml
+  - tml
+scope: source.toml
+contexts:
+  main:
+    - include: comments
+    - match: '^\s*(\[\[\]\]|\[\[\..*\]\]|\[\[.*\.\]\]|\[\[.*\.\..*\]\]|\[\[.*[\[\]#].*\]\]|\[\[.*\]\].+\n)'
+      comment: |
+        Table arrays have the same error conditions given for standard tables.
+        See below.
+      push:
+        - meta_scope: invalid.illegal.table-array.toml
+        - match: '(?=^\s*\[?\[.*\]\]?)'
+          pop: true
+    - match: '^\s*(\[\[)(.+)(\]\])\s*'
+      comment: A named array of hash tables
+      captures:
+        1: punctuation.definition.table-array.begin.toml
+        2: entity.table-array.toml
+        3: punctuation.definition.table-array.end.toml
+      push:
+        - meta_scope: meta.tag.table-array.toml
+        - match: '(?=^\s*\[?\[.*\]\]?)'
+          pop: true
+        - include: comments
+        - include: keys
+    - match: '^\s*(\[\]|\[\..*\]|\[.*\.\]|\[.*\.\..*\]|\[.*[\[\]#].*\]|\[.*\].+\n)'
+      comment: |
+        Each table name segment must be non-empty, must not contain the characters
+        '[', ']' or '#' and is delimited by a '.'.  Tables "appear in square
+        brackets *on a line by themselves*"
+      push:
+        - meta_scope: invalid.illegal.table.toml
+        - match: '(?=^\s*\[?\[.*\]\]?)'
+          pop: true
+    - match: '^\s*(\[)(.+)(\])\s*'
+      comment: A named hash table
+      captures:
+        1: punctuation.definition.table.begin.toml
+        2: entity.table.toml
+        3: punctuation.definition.table.end.toml
+      push:
+        - meta_scope: meta.tag.table.toml
+        - match: '(?=^\s*\[?\[.*\]\]?)'
+          pop: true
+        - include: comments
+        - include: keys
+  comments:
+    - match: ((#).*$)
+      comment: Comments - whole line or partial
+      scope: comment.line.number-sign.toml
+      captures:
+        1: punctuation.definition.comment.toml
+  dataTypes:
+    - match: '"""'
+      comment: Multi-line String
+      captures:
+        0: punctuation.definition.string.begin.toml
+      push:
+        - meta_scope: string.quoted.double.toml
+        - match: (?<!\\)"""
+          captures:
+            0: punctuation.definition.string.end.toml
+          pop: true
+        - include: escapes
+        - match: \\\n\s*
+          scope: constant.character.escape.whitespace.toml
+    - match: '"'
+      comment: String
+      captures:
+        0: punctuation.definition.string.begin.toml
+      push:
+        - meta_scope: string.quoted.double.toml
+        - match: (?<!\\)"
+          captures:
+            0: punctuation.definition.string.end.toml
+          pop: true
+        - include: escapes
+    - match: "'''"
+      comment: Multi-line Literal String
+      captures:
+        0: punctuation.definition.string.begin.toml
+      push:
+        - meta_scope: string.quoted.single.toml
+        - match: (?<!\\)'''
+          captures:
+            0: punctuation.definition.string.end.toml
+          pop: true
+    - match: "'"
+      comment: Literal String
+      captures:
+        0: punctuation.definition.string.begin.toml
+      push:
+        - meta_scope: string.quoted.single.toml
+        - match: (?<!\\)'
+          captures:
+            0: punctuation.definition.string.end.toml
+          pop: true
+    - match: '(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])Z'
+      comment: Datetime - ISO8601 dates
+      scope: constant.other.date.toml
+    - match: '(-?[0-9]+)\.([0-9]+)'
+      comment: Float
+      scope: constant.numeric.float.toml
+    - match: "-?[0-9]+"
+      comment: Integer
+      scope: constant.numeric.integer.toml
+    - match: (true|false)
+      comment: Boolean
+      scope: constant.language.boolean.toml
+    - match: '\['
+      comment: Array
+      captures:
+        0: punctuation.definition.array.begin.toml
+      push:
+        - meta_scope: meta.array.toml
+        - match: '\]'
+          captures:
+            0: punctuation.definition.array.end.toml
+          pop: true
+        - include: comments
+        - include: dataTypes
+  escapes:
+    - match: '\\[btnfr"/\\]'
+      scope: constant.character.escape.toml
+    - match: '(\\U[0-9A-Fa-f]{8})|(\\u[0-9A-Fa-f]{4})'
+      captures:
+        1: constant.character.escape.unicode.16-bit-hex.toml
+        2: constant.character.escape.unicode.32-bit-hex.toml
+    - match: \\.
+      scope: invalid.illegal.character.escape.toml
+  keys:
+    - match: '^\s*([^\[]+)\s*(\=)\s*'
+      captures:
+        1: entity.name.tag.toml
+        2: punctuation.separator.key-value.toml
+      push:
+        - match: '(?=(\s*[^\[]+\s*=\s*|^\s*\[?\[.*\]\]?))'
+          pop: true
+        - include: comments
+        - include: dataTypes
